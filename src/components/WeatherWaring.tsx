@@ -7,7 +7,7 @@ const WeatherWarning = ({ temp }: { temp: number }) => {
         if (temp <= 37 && temp >= 35) return "hot";
         else if (temp > 37 && temp <= 39) return "extra_hot";
         else if (temp >= 13 && temp <= 15) return "cool";
-        else if (temp > 15 && temp < 30) return "nomie"
+        else if (temp > 15 && temp < 35) return "nomie"
     }
 
     const result = (warning) => {

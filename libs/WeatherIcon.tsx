@@ -18,6 +18,6 @@ export const getWeatherIcon = (code: number, isDay: boolean) => {
         case [95, 96, 99].includes(code):
             return "strong_thunderstorms.svg"; // dông mạnh
         default:
-            return "❔";
+            return "blizzard.svg";
     }
 };

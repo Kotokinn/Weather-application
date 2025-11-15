@@ -39,8 +39,8 @@ const Homepage = () => {
         latitude: "10.7755254",
         longitude: "106.7021047",
         current: "temperature_2m_max,temperature_2m_min,temperature_2m,wind_speed_10m,weathercode",
-        hourly: "temperature_2m,relative_humidity_2m,weathercode,precipitation_probability",
-        daily: "temperature_2m_max,temperature_2m_min,weathercode",
+        hourly: "temperature_2m,relative_humidity_2m,weathercode,precipitation_probability,pressure_msl,shortwave_radiation",
+        daily: "temperature_2m_max,temperature_2m_min,weathercode,sunrise,sunset",
         timezone: "auto",
         start_date: dateFormated(currDate),
         end_date: dateFormated(nextDate)
@@ -69,6 +69,8 @@ const Homepage = () => {
             const res = await fetch(process.env.NEXT_PUBLIC_WEATHER_URL + weaConf);
             const data = await res.json();
             setWeather(data);
+            setCurrentData(data.current)
+
 
             currDate.setMinutes(0, 0, 0);
             const hoursMerged = data.hourly.time.map((t: string, i: number) => ({
@@ -76,9 +78,19 @@ const Homepage = () => {
                 temperature: data.hourly.temperature_2m[i],
                 humidity: data.hourly.relative_humidity_2m[i],
                 weathercode: data.hourly.weathercode[i],
-                rainy_percent: data.hourly.precipitation_probability[i]
+                rainy_percent: data.hourly.precipitation_probability[i],
+                pressure_msl: data.hourly.pressure_msl[i],
+                shortwave_radiation: data.hourly.shortwave_radiation[i]
+
             }));
 
+            const currentData = hoursMerged.reduce((prev, curr) => {
+                const prevDiff = Math.abs(new Date(prev.time).getTime() - currDate.getTime());
+                const currDiff = Math.abs(new Date(curr.time).getTime() - currDate.getTime());
+                return currDiff < prevDiff ? curr : prev;
+            });
+
+            // console.log(currentData);
             const nextDate = new Date(currDate);
             nextDate.setDate(currDate.getDate() + 1);
             const filtered = hoursMerged
@@ -118,21 +130,32 @@ const Homepage = () => {
                 temp_max: data.daily.temperature_2m_max[index],
                 temp_min: data.daily.temperature_2m_min[index],
                 weathercode: data.daily.weathercode[index],
-                rainy_percent: dailyRainyPercent[index]
+                rainy_percent: dailyRainyPercent[index],
+                sunrise: data.daily.sunrise[index],
+                sunset: data.daily.sunset[index],
+
             }))
+            let today = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            const currentTempMaxMin = dailyMerged.filter(item => item.daily === today);
+            setCurrentData((prev) => ({
+                ...prev,
+                temperature_2m_max: currentTempMaxMin[0]?.temp_max,
+                temperature_2m_min: currentTempMaxMin[0]?.temp_min,
+                rainy_percent: currentData?.rainy_percent,
+                sunrise: currentTempMaxMin[0]?.sunrise,
+                sunset: currentTempMaxMin[0]?.sunset,
+                wind: data.current.wind_speed_10m,
+                humidity: currentData?.humidity,
+                pressure_msl: currentData.pressure_msl,
+                shortwave_radiation: currentData.shortwave_radiation || 0,
+            }))
+
             setDailyData(dailyMerged);
 
 
-            const currentTempMaxMin = dailyMerged.filter(item => item.daily === `${year}-${month}-${parseInt(day)}`);
-            const currentMerged = {
-                ...
-                data.current,
-                temperature_2m_max: currentTempMaxMin[0].temp_max,
-                temperature_2m_min: currentTempMaxMin[0].temp_min
-
-            }
-            setCurrentData(currentMerged)
         };
+
+
 
         fetchWeather();
     }, [config]);
@@ -142,7 +165,8 @@ const Homepage = () => {
 
     const isDay = currDate.getHours() >= 6 && currDate.getHours() < 18;
 
-    console.log(currentData)
+    // console.log(weather)
+
     return (
         <Grid container spacing={2} alignContent={'start'} className="px-3 min-h-screen">
             <Grid className="flex flex-row gap-2 px-2" size={12}>
@@ -159,7 +183,7 @@ const Homepage = () => {
                     Search
                 </Button>
             </Grid>
-            <Grid size={6}>
+            <Grid size={7}>
                 <Stack>
                     <Typography variant="body1" color="initial">Lúc này</Typography>
                     <Stack direction={'row'} alignItems={'center'}>
@@ -170,10 +194,10 @@ const Homepage = () => {
                 </Stack>
             </Grid>
 
-            <Grid size={6}>
+            <Grid size={5}>
                 <Stack className='h-full' direction={'column'} alignItems={'end'} justifyContent={'center'}>
-                    <Typography variant="body1" color="initial">mua nho</Typography>
-                    <Typography variant="body1" color="initial">cam giac nhu 36</Typography>
+                    <Typography variant="body1" color="initial">Khả năng mưa</Typography>
+                    <Typography variant="body1" color="initial">{parseInt(currentData.rainy_percent)}%</Typography>
                 </Stack>
             </Grid>
 
@@ -195,7 +219,7 @@ const Homepage = () => {
                 <Stack gap={1} className="h-auto">
                     {dailyData.map((item, index) => (
                         <Box key={index} className="bg-info first:!rounded-t-lg last:!rounded-b-lg">
-                            <HorizoneItem weather={item} />
+                            <HorizoneItem index={index} weather={item} />
                         </Box>
                     ))}
                 </Stack>
@@ -203,8 +227,7 @@ const Homepage = () => {
 
             <Grid size={12}>
                 <Typography variant="body1" color="initial">Tinh trang hien tai</Typography>
-
-                <TinhTrangHienTai />
+                <TinhTrangHienTai data={currentData} />
             </Grid>
         </Grid>
     )

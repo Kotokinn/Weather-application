@@ -7,7 +7,7 @@ const WeatherWarning = ({ temp }: { temp: number }) => {
         if (temp <= 37 && temp >= 35) return "hot";
         else if (temp > 37 && temp <= 39) return "extra_hot";
         else if (temp >= 13 && temp <= 15) return "cool";
-        // else if()
+        else if (temp > 15 && temp < 30) return "nomie"
     }
 
     const result = (warning) => {
@@ -45,7 +45,7 @@ const WeatherWarning = ({ temp }: { temp: number }) => {
         }
     }
 
-    const data = result(warning(38));
+    const data = result(warning(temp));
 
     const colorBoxIcon = data.col === 'red-700' ? 'bg-red-700' :
         data.col === 'red-800' ? 'bg-red-800' :

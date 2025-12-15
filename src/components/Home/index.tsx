@@ -41,7 +41,7 @@ const Homepage = () => {
     const nextDate = `${nextyear}-${nextmonth}-${nextday}`;
 
     let configLoc = "&format=json&addressdetails=1";
-    const [loc, setLoc] = useState<FlatLocation | String>("");
+    const [loc, setLoc] = useState<FlatLocation | null>(null)
 
     const [config, setConfig] = useState<ConfigurationProps>({
         latitude: "10.7755254",
@@ -174,7 +174,7 @@ const Homepage = () => {
 
     const isDay = currDate.getHours() >= 6 && currDate.getHours() < 18;
 
-    console.log(weather)
+    // console.log(weather)
 
     return (
         <Grid container spacing={2} alignContent={'start'} className="px-3 min-h-screen">
@@ -219,9 +219,20 @@ const Homepage = () => {
             <WeatherWarning temp={Math.round(currentData?.temperature_2m)} />
 
             <Grid size={12}>
-                <RecommentLocation address={loc.label} weather={weather.current.weathercode} temp={Math.round(currentData?.temperature_2m)} />
+                {loc ? (
+                    <RecommentLocation
+                        address={loc.label}
+                        weather={currentData.weathercode}
+                        temp={Math.round(currentData.temperature_2m)}
+                    />
+                ) : (
+                    <Typography variant="body2" color="text.secondary">
+                        Vui lòng chọn địa điểm
+                    </Typography>
+                )}
+
             </Grid>
-            
+
             <Grid size={12}>
                 <Typography variant="body1" color="initial">{'Dự báo hàng giờ'}</Typography>
                 <Box className="bg-info flex flex-row gap-8 max-w-full overflow-auto h-auto rounded-xl p-5">

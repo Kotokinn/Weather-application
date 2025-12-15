@@ -20,6 +20,7 @@ import ArrowBackIosIcon from '@mui/icons-material/ArrowBackIos';
 import PersonIcon from '@mui/icons-material/Person';
 import SettingsRemoteIcon from '@mui/icons-material/SettingsRemote';
 import DeviceThermostatIcon from '@mui/icons-material/DeviceThermostat';
+import SearchIcon from '@mui/icons-material/Search';
 
 const icons = {
     menu: MenuIcon,
@@ -42,7 +43,8 @@ const icons = {
     setting: SettingsIcon,
     backArrow: ArrowBackIosIcon,
     person: PersonIcon,
-    remote: SettingsRemoteIcon
+    remote: SettingsRemoteIcon,
+    search: SearchIcon
 };
 
 type IconName = keyof typeof icons;

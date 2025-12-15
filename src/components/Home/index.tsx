@@ -1,15 +1,16 @@
 "use client"
 import Icon from '@/utils/icons';
-import { Grid, TextField, Stack, Typography, Box, Button } from '@mui/material';
+import { Grid, Stack, Typography, Box, Button } from '@mui/material';
 import Image from 'next/image';
 import VerticalItem from '../VerticalItems';
 import HorizoneItem from '../HorizoneItem';
 import TinhTrangHienTai from '../TinhTrangHienTai';
 import { useEffect, useState } from 'react';
-import { time } from 'console';
 import { dateFormated } from '@/utils/YearMonthDateFormate';
 import { getWeatherIcon } from 'libs/WeatherIcon';
 import WeatherWarning from '../WeatherWaring';
+import LocationAutocomplete, { FlatLocation } from '../AutoCompleteLocation';
+import RecommentLocation from '../RecommentLocation';
 
 type ConfigurationProps = {
     latitude: string,
@@ -30,11 +31,18 @@ const Homepage = () => {
     const month = String(currDate.getMonth() + 1).padStart(2, '0');
     const day = String(currDate.getDate()).padStart(2, '0');
 
+    const next = new Date(currDate);
+    next.setDate(currDate.getDate() + 7);
 
-    const nextDate = `${year}-${month}-${parseInt(day) + 7}`;
+    const nextyear = next.getFullYear();
+    const nextmonth = String(next.getMonth() + 1).padStart(2, '0');
+    const nextday = String(next.getDate()).padStart(2, '0');
+
+    const nextDate = `${nextyear}-${nextmonth}-${nextday}`;
 
     let configLoc = "&format=json&addressdetails=1";
-    const [locationStr, setLocationStr] = useState("Hồ Chí Minh");
+    const [loc, setLoc] = useState<FlatLocation | String>("");
+
     const [config, setConfig] = useState<ConfigurationProps>({
         latitude: "10.7755254",
         longitude: "106.7021047",
@@ -46,7 +54,7 @@ const Homepage = () => {
         end_date: dateFormated(nextDate)
     })
     const handleClick = async () => {
-        let replaceStr = locationStr.replaceAll(" ", "+");
+        let replaceStr = loc.label.replace(/\s+/g, '+');
         await fetch(process.env.NEXT_PUBLIC_ADDRESS_URL + replaceStr + configLoc)
             .then((res) => res.json())
             .then((data) => {
@@ -68,12 +76,13 @@ const Homepage = () => {
             const weaConf = new URLSearchParams(config).toString();
             const res = await fetch(process.env.NEXT_PUBLIC_WEATHER_URL + weaConf);
             const data = await res.json();
+            // console.log(data)
             setWeather(data);
             setCurrentData(data.current)
 
 
             currDate.setMinutes(0, 0, 0);
-            const hoursMerged = data.hourly.time.map((t: string, i: number) => ({
+            const hoursMerged = data?.hourly.time.map((t: string, i: number) => ({
                 time: t,
                 temperature: data.hourly.temperature_2m[i],
                 humidity: data.hourly.relative_humidity_2m[i],
@@ -165,24 +174,30 @@ const Homepage = () => {
 
     const isDay = currDate.getHours() >= 6 && currDate.getHours() < 18;
 
-    // console.log(weather)
+    console.log(weather)
 
     return (
         <Grid container spacing={2} alignContent={'start'} className="px-3 min-h-screen">
             <Grid className="flex flex-row gap-2 px-2" size={12}>
-                <TextField fullWidth
-                    // id=""
-                    variant='standard'
-                    label=""
-                    placeholder='Vi tri'
-                    value={locationStr}
-                    onChange={(e) => setLocationStr(e.target.value)}
-
-                />
-                <Button onClick={handleClick} variant="text" color="primary">
-                    Search
+                <LocationAutocomplete onSelect={setLoc} value={loc} />
+                <Button
+                    onClick={handleClick}
+                    variant="contained"
+                    color="primary"
+                    sx={{
+                        minWidth: 48,
+                        width: 48,
+                        height: 48,
+                        borderRadius: '50%',
+                        padding: 4,
+                    }}
+                >
+                    <Icon name='search' />
                 </Button>
+
             </Grid>
+
+
             <Grid size={7}>
                 <Stack>
                     <Typography variant="body1" color="initial">Lúc này</Typography>
@@ -203,6 +218,10 @@ const Homepage = () => {
 
             <WeatherWarning temp={Math.round(currentData?.temperature_2m)} />
 
+            <Grid size={12}>
+                <RecommentLocation address={loc.label} weather={weather.current.weathercode} temp={Math.round(currentData?.temperature_2m)} />
+            </Grid>
+            
             <Grid size={12}>
                 <Typography variant="body1" color="initial">{'Dự báo hàng giờ'}</Typography>
                 <Box className="bg-info flex flex-row gap-8 max-w-full overflow-auto h-auto rounded-xl p-5">
@@ -226,7 +245,7 @@ const Homepage = () => {
             </Grid>
 
             <Grid size={12}>
-                <Typography variant="body1" color="initial">Tinh trang hien tai</Typography>
+                <Typography variant="body1" color="initial">Tình trạng hiện tại</Typography>
                 <TinhTrangHienTai data={currentData} />
             </Grid>
         </Grid>
